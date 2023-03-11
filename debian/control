@@ -1,0 +1,17 @@
+Source: rfid-controller
+Section: unknown
+Priority: optional
+Maintainer: Ivan Odintes <i_odinets@protonmail.comunknown>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+Standards-Version: 4.6.1
+Homepage: https://github.com/ivan-odinets/rfid-controller
+
+Package: rfid-controller
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: Small application to execute commands based on readings from hid/serial devices.
+ This application allow executing commands based on readings from devices connected to computer. It can be used together with any other devices, which are recognized as a keyboard and producing /dev/input/* events.

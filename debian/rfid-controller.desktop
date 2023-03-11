@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=RFID Controller
+Exec=/usr/bin/rfid-controller
+Terminal=false
+Categories=Utility
+Icon=rfid-controller.png
+Type=Application

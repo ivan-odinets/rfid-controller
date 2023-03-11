@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/16x16/rfid-controller.png</file>
+        <file>icons/24x24/rfid-controller.png</file>
+        <file>icons/32x32/rfid-controller.png</file>
+        <file>icons/64x64/rfid-controller.png</file>
+        <file>icons/128x128/rfid-controller.png</file>
+        <file>icons/256x256/rfid-controller.png</file>
+        <file>icons/512x512/rfid-controller.png</file>
+    </qresource>
+</RCC>
