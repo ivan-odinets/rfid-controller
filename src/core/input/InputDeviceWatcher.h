@@ -53,7 +53,7 @@ public:
     void stop();
     void updateDeviceList();
 
-    InputDeviceInfoList getAvailableDevices() const   { return m_lastScanResults; }
+    InputDeviceInfoList availableDevices() const { return m_lastScanResults; }
 
 signals:
     void deviceWasAttached(const InputDeviceInfo& deviceDetails);
@@ -67,7 +67,6 @@ signals:
 private:
     QFileSystemWatcher      m_fileSystemWatcher;
     InputDeviceInfoList     m_lastScanResults;
-    QDir                    m_devInputDir;
 
 #elif defined(Q_OS_LINUX) && defined(Q_OS_ANDROID)
     #error("Android builds currently not supported")

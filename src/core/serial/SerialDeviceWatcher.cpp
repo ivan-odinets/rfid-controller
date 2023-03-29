@@ -20,7 +20,9 @@
 
 SerialDeviceWatcher::SerialDeviceWatcher(QObject *parent)
     : QObject{parent},m_autoupdateInterval(500)
-{}
+{
+    m_lastScanResults = QSerialPortInfo::availablePorts();
+}
 
 SerialDeviceWatcher::~SerialDeviceWatcher()
 {

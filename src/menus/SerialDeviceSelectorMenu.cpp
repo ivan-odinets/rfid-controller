@@ -44,6 +44,12 @@ void SerialDeviceSelectorMenu::allowMultipleSelection(bool arg)
     w_deviceActionsGroup->setExclusive(!arg);
 }
 
+void SerialDeviceSelectorMenu::setCurrentSerialDeviceList(const QList<QSerialPortInfo>& portList)
+{
+    for (const QSerialPortInfo& portInfo : portList)
+        _addDeviceActionEntry(portInfo);
+}
+
 void SerialDeviceSelectorMenu::clearDeviceList()
 {
     foreach (QAction* action, w_deviceActionsGroup->actions()) {

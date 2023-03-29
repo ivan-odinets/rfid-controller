@@ -1,3 +1,10 @@
+rfid-controller (0.1.1-1) UNRELEASED; urgency=low
+
+  * Added possibility to configure notifications fpr attached, detached, opened and closed devices.
+  * Added monitoring changes of opened file
+
+ -- Ivan Odinets <i_odinets@protonmail.com>  Sat, 28 Mar 2023 04:20:00 +0200
+
 rfid-controller (0.1.0-1) UNRELEASED; urgency=low
 
   * Initial release.

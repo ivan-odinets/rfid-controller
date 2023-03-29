@@ -19,7 +19,9 @@
 #ifndef COMMANDLISTMANAGER_H
 #define COMMANDLISTMANAGER_H
 
+#include <QDateTime>
 #include <QFileDevice>
+#include <QFileInfo>
 #include <QFileSystemWatcher>
 
 class CommandList;
@@ -52,9 +54,13 @@ public:
     /*! @brief Delets current CommandList and closes current file */
     void      closeCurrentFile();
 
-    /*! @brief Returns name of currently opened file. If none - QString() */
-    QString         currentFileName() const                          { return m_currentFileName; }
+    /*! @brief Returns true if any file is opened and current CommandList was loaded from it. */
+    bool      fileOpened() const { return ( !m_currentFileInfo.fileName().isEmpty() ) && ( m_currentFileInfo.fileName() != defaultNewFileName() ); }
 
+    /*! @brief Returns information about currently opened file */
+    QFileInfo currentFileInfo() const { return m_currentFileInfo; }
+
+    /*! @brief Returns translated default file name for creating new files */
     QString         defaultNewFileName() const                       { return tr("Untitled.cmds"); }
 
     /*! @brief Returns pointer to currently loaded CommandList. If none - nullptr */
@@ -64,14 +70,17 @@ signals:
     /*! @brief This signal is emitted in case of any error. Argument contains error description in human-readable form */
     void errorMessage(const QString& messageText);
 
-    /*! @brief This signal is emitted when current CommandList is changed */
+    /*! @brief This signal is emitted when current CommandList is changed. */
     void commandListChanged(CommandList* newList);
 
-    /*! @brief This signal is emitted when currentFileName is changed */
-    void currentFileNameChanged(const QString& fileName);
+    /*! @brief This signal is emitted when currentFile is changed. This can happen when new file was opened, or current data was saved as new file. */
+    void currentFileInfoChanged(const QFileInfo& fileInfo);
 
-    /*! @brief This signal is emitted when currently opened file was removed from disk by external program */
+    /*! @brief This signal is emitted when currently opened file was removed from disk by external program. */
     void commandsFileRemoved();
+
+    /*! @brief This signal is emitted when currently opened file was modified on disk by any external program. */
+    void commandsFileModified();
 
 private slots:
     void _fileChangedWatcherSignal(const QString& filePath);
@@ -82,9 +91,10 @@ private:
     void           _setCurrentCommandList(CommandList* newList);
     CommandList*   p_currentCommandList;
 
-    void                _setCurrentFileName(const QString& fileName);
+    void                _setCurrentFilePath(const QString& fileName);
     QFileSystemWatcher  m_fileWatcher;
-    QString             m_currentFileName;
+    QFileInfo           m_currentFileInfo;
+    QDateTime           m_lastFileModification;
 };
 
 #endif // COMMANDLISTMANAGER_H

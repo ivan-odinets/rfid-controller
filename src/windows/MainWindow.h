@@ -21,12 +21,17 @@
 
 #include <QMainWindow>
 
+#include <QFileInfo>
+
 class QActionGroup;
+
+#include "core/NotificationType.h"
 
 class CommandList;
 class RfidController;
 class MainWindowSettings;
 class MonitorWidget;
+class NotificationMenu;
 
 #ifndef QT_NO_SYSTEMTRAYICON
     #include <QSystemTrayIcon>
@@ -52,23 +57,15 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    enum Notify {
-        NoNotify,
-        MsgNotify,
-        TrayNotify,
-        UnknownNotify
-    };
-
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 public slots:
     void displayLastKey(const QString& key);
-    void showErrorMessageBox(const QString& errorMessage);
-    void showInfoMessageBox(const QString& infoMessage);
+    void showErrorMessage(const QString& errorMessage);
 
-    void commandsFileNameChanged(const QString& newFileName);
-    void commandsFileChanged();
+    void commandsFileInfoChanged(const QFileInfo& newFileInfo);
+    void commandsFileModified();
     void commandsFileRemoved();
     void setCommandList(CommandList* commandsList);
 
@@ -92,7 +89,11 @@ private slots:
 
     //Menu - settings
     void _toggleStartHiddenOption(bool state);
-    void _toggleOpenedDeviceNotifyStatus(QAction* action);
+    void _attachedDeviceNotifyStatusChanged(Notification::Type newStatus);
+    void _detachedDeviceNotifyStatusChanged(Notification::Type newStatus);
+    void _openedDeviceNotifyStatusChanged(Notification::Type newStatus);
+    void _closedDeviceNotifyStatusChanged(Notification::Type newStatus);
+    void _errorNotificationStatusChanged(Notification::Type newStatus);
 
     //Menu - Help
     void _aboutRfidController();
@@ -106,8 +107,8 @@ private:
     void _addRecentFileAction(const QString& fileName);
     QStringList                   m_recentFiles;
 
-    void _notifyAboutDevice(const QString& messageText);
-    Notify                        m_connectedDeviceNotification;
+    void _showNotification(const QString& messageText,Notification::Type type);
+    void _showError(const QString& messageText,Notification::Type type);
 
     bool _maybeSave();
 
@@ -124,8 +125,11 @@ private:
     QAction*                      w_minimizeOnClose;
     QAction*                      w_startHidden;
 
-    QAction*                      w_noDeviceNotificationAction;
-    QAction*                      w_msgDeviceNotificationAction;
+    NotificationMenu*             w_attachedDeviceNotificationMenu;
+    NotificationMenu*             w_detachedDeviceNotificationMenu;
+    NotificationMenu*             w_openedDeviceNotificationMenu;
+    NotificationMenu*             w_closedDeviceNotificationMenu;
+    NotificationMenu*             w_errorMessage;
 
 #ifdef HID
 //
@@ -133,7 +137,10 @@ private:
 //
 
 private slots:
-    void _inputDeviceConnected(const InputDeviceInfo& deviceInfo);
+    void _inputDeviceAttached(const InputDeviceInfo& deviceInfo);
+    void _inputDeviceDetached(const InputDeviceInfo& deviceInfo);
+    void _inputDeviceOpened(const InputDeviceInfo& deviceInfo);
+    void _inputDeviceClosed(const InputDeviceInfo& deviceInfo);
 
     //Settings menu entry
     void _configureInputFilter();
@@ -150,7 +157,10 @@ private:
 //
 
 private slots:
-    void _serialDeviceConnected(const QSerialPortInfo& portInfo);
+    void _serialDeviceAttached(const QSerialPortInfo& portInfo);
+    void _serialDeviceDetached(const QSerialPortInfo& portInfo);
+    void _serialDeviceOpened(const QSerialPortInfo& portInfo);
+    void _serialDeviceClosed(const QSerialPortInfo& portInfo);
 
     //Settings menu entries
     void _configureSerialParameters();
@@ -171,7 +181,6 @@ private:
     void _setupTray();
     QSystemTrayIcon*              w_trayIcon;
     QAction*                      w_minimizeToTray;
-    QAction*                      w_trayDeviceNotificationAction;
 
 private slots:
     void _iconActivated(QSystemTrayIcon::ActivationReason reason);

@@ -46,7 +46,7 @@ public:
     void setAutoupdateInterval(uint newInterval);
     uint autoupdateInterval() const                        { return m_autoupdateInterval; }
 
-    QList<QSerialPortInfo> getAvailableDevices() const     { return m_lastScanResults; }
+    QList<QSerialPortInfo> availableDevices() const        { return m_lastScanResults; }
 
 signals:
     void deviceWasAttached(const QSerialPortInfo& deviceDetails);

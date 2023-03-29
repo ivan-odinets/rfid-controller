@@ -40,12 +40,12 @@ public:
     ~InputDeviceManager() {}
 
 public:
-    void                start()                                 { m_inputDeviceWatcher.start(); }
+    void                start();
     void                stop()                                  { m_inputDeviceWatcher.stop(); }
-    void                updateInputDeviceList()                { m_inputDeviceWatcher.updateDeviceList(); }
+    void                updateInputDeviceList()                 { m_inputDeviceWatcher.updateDeviceList(); }
 
     InputDeviceInfoList openedInputDevices() const;
-    InputDeviceInfoList availableInputDevices() const           { return m_inputDeviceWatcher.getAvailableDevices(); }
+    InputDeviceInfoList availableInputDevices() const           { return m_inputDeviceWatcher.availableDevices(); }
 
     bool                inputDeviceAutoconnection() const       { return p_settings->inputDeviceAutoconnection(); }
     void                setInputDeviceAutoconnection(bool state);

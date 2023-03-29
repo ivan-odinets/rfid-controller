@@ -25,6 +25,26 @@ InputDeviceManager::InputDeviceManager(QObject *parent)
     connect(&m_inputDeviceWatcher,&InputDeviceWatcher::deviceWasDetached,this,&InputDeviceManager::_handleDetachedInputDevice);
 }
 
+void InputDeviceManager::start()
+{
+    //Automatically connect all devices, which are matching autoconnect criteria
+    if (p_settings->inputDeviceAutoconnection()) {   //If autoconnect enabled
+
+        //Go through attached device list and connect enything which is fitting autoconnect rules
+        for (const InputDeviceInfo& deviceInfo : m_inputDeviceWatcher.availableDevices()) {
+            if (!p_settings->inputDeviceFilter().isMatching(deviceInfo)) {
+                continue;
+            }
+
+            if (_tryOpeningInputDevice(deviceInfo)) {
+                emit inputDeviceWasOpened(deviceInfo);
+            }
+        }
+    }
+
+    m_inputDeviceWatcher.start();
+}
+
 InputDeviceInfoList InputDeviceManager::openedInputDevices() const
 {
     InputDeviceInfoList result;

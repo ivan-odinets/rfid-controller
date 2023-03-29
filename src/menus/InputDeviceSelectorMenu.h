@@ -21,7 +21,7 @@
 
 #include <QMenu>
 
-class InputDeviceInfo;
+#include "core/input/InputDeviceInfo.h"
 
 class InputDeviceSelectorMenu : public QMenu
 {
@@ -32,6 +32,8 @@ public:
     ~InputDeviceSelectorMenu();
 
     void allowMultipleSelection(bool arg);
+
+    void setCurrentInputDeviceList(const InputDeviceInfoList& deviceList);
 
 signals:
     void updateRequested();

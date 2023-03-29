@@ -20,8 +20,6 @@
 
 #include <QActionGroup>
 
-#include "core/input/InputDeviceInfo.h"
-
 InputDeviceSelectorMenu::InputDeviceSelectorMenu(QWidget* parent)
     : QMenu(parent)
 {
@@ -42,6 +40,12 @@ InputDeviceSelectorMenu::~InputDeviceSelectorMenu()
 void InputDeviceSelectorMenu::allowMultipleSelection(bool arg)
 {
     w_deviceActionsGroup->setExclusive(!arg);
+}
+
+void InputDeviceSelectorMenu::setCurrentInputDeviceList(const InputDeviceInfoList& deviceList)
+{
+    for (const InputDeviceInfo& deviceInfo : deviceList)
+        _addDeviceActionEntry(deviceInfo);
 }
 
 void InputDeviceSelectorMenu::clearDeviceList()

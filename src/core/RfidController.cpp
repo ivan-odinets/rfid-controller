@@ -28,8 +28,10 @@ RfidController::RfidController(QObject *parent)
     connect(&m_commandListManager,&CommandsListManager::errorMessage,this,&RfidController::errorMessage);
 
     connect(&m_commandListManager,&CommandsListManager::commandListChanged,this,&RfidController::commandListChanged);
-    connect(&m_commandListManager,&CommandsListManager::currentFileNameChanged,this,&RfidController::commandsFileNameChanged);
+    connect(&m_commandListManager,&CommandsListManager::currentFileInfoChanged,this,&RfidController::commandFileNameChanged);
     connect(&m_commandListManager,&CommandsListManager::commandsFileRemoved,this,&RfidController::commandsFileRemoved);
+
+    connect(&m_commandListManager,&CommandsListManager::commandsFileModified,this,&RfidController::commandsFileModified);
 
 #ifdef HID
     connect(&m_inputDeviceManager,&InputDeviceManager::keyFound,this,&RfidController::_keyDiscovered);
@@ -50,7 +52,10 @@ RfidController::RfidController(QObject *parent)
 
 RfidController::~RfidController()
 {
-    RfidControllerSettings::get()->setOpenedCommandsFileName(m_commandListManager.currentFileName());
+    if (m_commandListManager.fileOpened())
+        RfidControllerSettings::get()->setOpenedCommandsFileName(m_commandListManager.currentFileInfo().absoluteFilePath());
+    else
+        RfidControllerSettings::get()->setOpenedCommandsFileName(QString());
 }
 
 void RfidController::start()

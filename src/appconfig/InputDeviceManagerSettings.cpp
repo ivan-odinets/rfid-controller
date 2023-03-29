@@ -58,6 +58,7 @@ void InputDeviceManagerSettings::loadValues()
 
 void InputDeviceManagerSettings::setInputDeviceAutoconnection(bool state)
 {
+    m_inputDeviceAutoconnection = state;
     _setValue(INPUT_AUTOCONNECT,state);
 }
 

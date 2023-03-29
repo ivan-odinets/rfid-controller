@@ -7,6 +7,7 @@ DISTFILES += \
     .gitignore \
     LICENSE \
     README.md \
+    debian/changelog \
     debian/rfid-controller.desktop \
     debian/rfid-controller.install \
     docs/Doxyfile

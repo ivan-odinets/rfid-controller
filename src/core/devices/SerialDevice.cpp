@@ -29,7 +29,8 @@ SerialDevice::SerialDevice(const QSerialPortInfo& portInfo, QObject* parent)
 
 SerialDevice::~SerialDevice()
 {
-    close();
+    if (this->isOpened())
+        close();
 }
 
 bool SerialDevice::open(QIODevice::OpenMode openMode)
@@ -52,6 +53,11 @@ void SerialDevice::close()
     disconnect(&m_port,&QSerialPort::errorOccurred,this,&SerialDevice::_portError);
     m_port.close();
     emit deviceClosed();
+}
+
+bool SerialDevice::isOpened() const
+{
+    return m_port.isOpen();
 }
 
 void SerialDevice::_portReadyRead()

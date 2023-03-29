@@ -33,6 +33,8 @@ public:
 
     void allowMultipleSelection(bool arg);
 
+    void setCurrentSerialDeviceList(const QList<QSerialPortInfo>& portList);
+
 signals:
     void updateRequested();
 

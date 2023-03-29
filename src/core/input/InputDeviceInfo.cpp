@@ -33,6 +33,20 @@
 // Linux-specific code
 //
 
+QDir InputDeviceInfo::m_devInputDir("/dev/input");
+
+QList<InputDeviceInfo> InputDeviceInfo::availableInputDevices()
+{
+    QStringList devInputFileList = m_devInputDir.entryList(QDir::System | QDir::NoDotAndDotDot);
+    InputDeviceInfoList result;
+
+    //Search for attached devices
+    for (int i = 0; i < devInputFileList.count(); i++)
+        result.append(InputDeviceInfo::fromDeviceFileName(devInputFileList.at(i)));
+
+    return result;
+}
+
 bool InputDeviceInfo::isValid() const
 {
     return QFile::exists(m_deviceFilePath);

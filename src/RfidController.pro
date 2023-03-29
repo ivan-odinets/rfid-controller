@@ -3,7 +3,7 @@
 #
 
 DEFINES  += APP_NAME='\\"RFID\ Controller\\"'
-DEFINES  += APP_VERSION='\\"0.1.0\\"'
+DEFINES  += APP_VERSION='\\"0.1.1\\"'
 
 #Comment this disable support of HID devices (e.g. USB based rfid readers)
 DEFINES  += HID
@@ -31,7 +31,6 @@ MOC_DIR            = ../build/moc
 RCC_DIR            = ../build/rcc
 unix:OBJECTS_DIR   = ../build/o/unix
 win32:OBJECTS_DIR  = ../build/o/win32
-macx:OBJECTS_DIR   = ../build/o/mac
 
 #
 # Add all needed *.h and *.cpp files
@@ -43,6 +42,7 @@ HEADERS += \
     appconfig/Settings.h \
     appconfig/SettingsCore.h \
     core/CommandListManager.h \
+    core/NotificationType.h \
     core/RfidController.h \
     core/ServiceTypes.h \
     core/commands/Command.h \
@@ -55,6 +55,7 @@ SOURCES += \
     appconfig/Settings.cpp \
     appconfig/SettingsCore.cpp \
     core/CommandListManager.cpp \
+    core/NotificationType.cpp \
     core/RfidController.cpp \
     core/ServiceTypes.cpp \
     core/commands/Command.cpp \
@@ -140,6 +141,7 @@ contains(DEFINES, GUI) {
 
     HEADERS += \
         appconfig/MainWindowSettings.h \
+        menus/NotificationTypeMenu.h \
         widgets/Hex16BitSpinBox.h \
         widgets/MonitorWidget.h \
         widgets/CommandEditWidget.h \
@@ -149,6 +151,7 @@ contains(DEFINES, GUI) {
 
     SOURCES += \
         appconfig/MainWindowSettings.cpp \
+        menus/NotificationTypeMenu.cpp \
         widgets/Hex16BitSpinBox.cpp \
         widgets/MonitorWidget.cpp \
         widgets/CommandEditWidget.cpp \

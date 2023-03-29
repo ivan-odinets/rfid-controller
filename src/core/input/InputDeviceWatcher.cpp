@@ -36,13 +36,12 @@
 InputDeviceWatcher::InputDeviceWatcher(QObject* parent)
     : QObject(parent)
 {
-    m_devInputDir.setPath("/dev/input");
-    m_fileSystemWatcher.addPath(m_devInputDir.absolutePath());
+    m_fileSystemWatcher.addPath(InputDeviceInfo::inputDeviceDirectory().absolutePath());
+    m_lastScanResults = InputDeviceInfo::availableInputDevices();
 }
 
 void InputDeviceWatcher::start()
 {
-    updateDeviceList();
     connect(&m_fileSystemWatcher,&QFileSystemWatcher::directoryChanged,this,&InputDeviceWatcher::updateDeviceList);
 }
 
@@ -57,17 +56,14 @@ void InputDeviceWatcher::updateDeviceList()
     //This signal is not providing info about new/deleted files, so we need to do it manualy
     //by comparing new entries in /dev/input with old results
 
-    QStringList devInputFileList = m_devInputDir.entryList(QDir::System | QDir::NoDotAndDotDot);
-    InputDeviceInfoList newDeviceInfoList;
+    InputDeviceInfoList newDeviceInfoList = InputDeviceInfo::availableInputDevices();
 
     //Search for attached devices
-    for (int i = 0; i < devInputFileList.count(); i++) {
-        InputDeviceInfo deviceInfo = InputDeviceInfo::fromDeviceFileName(devInputFileList.at(i));
-        newDeviceInfoList.append(deviceInfo);
-        if (!m_lastScanResults.contains(deviceInfo)) {
+    for (int i = 0; i < newDeviceInfoList.count(); i++) {
+        if (!m_lastScanResults.contains(newDeviceInfoList.at(i))) {
             //Small delay needed so that systemd can change permissions (if needed) of device file to allow read acces...
-            QTimer::singleShot(500,[this,deviceInfo](){
-                emit deviceWasAttached(deviceInfo);
+            QTimer::singleShot(500,[this,newDeviceInfoList,i](){
+                emit deviceWasAttached(newDeviceInfoList.at(i));
             });
         }
     }

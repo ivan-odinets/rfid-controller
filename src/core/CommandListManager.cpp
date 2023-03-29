@@ -39,31 +39,39 @@ CommandsListManager::~CommandsListManager()
 void CommandsListManager::newCommandList()
 {
     _setCurrentCommandList(new CommandList);
-    _setCurrentFileName(defaultNewFileName());
+    _setCurrentFilePath(defaultNewFileName());
 }
 
-void CommandsListManager::openCommandListFile(const QString& fileName)
+void CommandsListManager::openCommandListFile(const QString& filePath)
 {
-    CommandList* newCmdList = _createCommandListFromFile(fileName);
-    if (newCmdList == nullptr)
+    //Try opening file at filePath
+    CommandList* newCmdList = _createCommandListFromFile(filePath);
+    if (newCmdList == nullptr) {
+        //If sth is wrong, and no file is opened - create a new file
+        if ( ! fileOpened() ) {
+            newCommandList();
+        }
         return;
+    }
 
     _setCurrentCommandList(newCmdList);
-    _setCurrentFileName(fileName);
+    _setCurrentFilePath(filePath);
 }
 
 void CommandsListManager::reloadCurrentCommandFile()
 {
-    if (m_currentFileName.isEmpty()) {
+    if (m_currentFileInfo.fileName().isEmpty()) {
         return;
     }
 
-    if (!QFile::exists(m_currentFileName)) {
+    if (!m_currentFileInfo.exists()) {
         return;
     }
 
-    CommandList* newCommands = _createCommandListFromFile(m_currentFileName);
+    CommandList* newCommands = _createCommandListFromFile(m_currentFileInfo.filePath());
     if (newCommands == nullptr) {
+        //Some error happened, while parsing file, assume that sth was changed in command list
+        p_currentCommandList->commandListChanged();
         return;
     }
 
@@ -87,11 +95,13 @@ void CommandsListManager::saveCurrentCommandsListAs(const QString& fileName)
 
     jsonDoc.setObject(rootObject);
 
+    disconnect(&m_fileWatcher,&QFileSystemWatcher::fileChanged,this,&CommandsListManager::_fileChangedWatcherSignal);
     file.write(jsonDoc.toJson());
     file.flush();
     file.close();
+    connect(&m_fileWatcher,&QFileSystemWatcher::fileChanged,this,&CommandsListManager::_fileChangedWatcherSignal);
 
-    _setCurrentFileName(fileName);
+    _setCurrentFilePath(fileName);
 
     return;
 }
@@ -99,7 +109,7 @@ void CommandsListManager::saveCurrentCommandsListAs(const QString& fileName)
 void CommandsListManager::closeCurrentFile()
 {
     _setCurrentCommandList(nullptr);
-    _setCurrentFileName(QString());
+    _setCurrentFilePath(QString());
 }
 
 void CommandsListManager::_fileChangedWatcherSignal(const QString& filePath)
@@ -108,22 +118,31 @@ void CommandsListManager::_fileChangedWatcherSignal(const QString& filePath)
         emit commandsFileRemoved();
         return;
     }
+
+    m_currentFileInfo.refresh();
+
+    if (m_currentFileInfo.lastModified() > m_lastFileModification) {
+        m_lastFileModification = m_currentFileInfo.lastModified();
+        emit commandsFileModified();
+    }
 }
 
-CommandList* CommandsListManager::_createCommandListFromFile(const QString& fileName)
+CommandList* CommandsListManager::_createCommandListFromFile(const QString& filePath)
 {
-    QFile file(fileName);
+    QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit errorMessage(tr("Error opening file %1.\r\n%2").arg(fileName)
+        emit errorMessage(tr("Error opening file %1.\r\n%2").arg(filePath)
                           .arg(file.errorString()));
         return nullptr;
     }
 
     QJsonParseError jsonError;
     QJsonDocument jsonDocument = QJsonDocument::fromJson(file.readAll(),&jsonError);
+    file.flush();
+    file.close();
 
     if (jsonDocument.isNull()) {
-        emit errorMessage(tr("Error while parsing file %1. \r\nJSON error: %2:%3").arg(fileName)
+        emit errorMessage(tr("Error while parsing file %1. \r\nJSON error: %2:%3").arg(filePath)
                           .arg(jsonError.errorString()).arg(jsonError.offset));
         return nullptr;
     }
@@ -131,13 +150,11 @@ CommandList* CommandsListManager::_createCommandListFromFile(const QString& file
     QJsonObject fileObject = jsonDocument.object();
     if (!fileObject.contains("commands") && !fileObject["commands"].isArray()) {
         emit errorMessage(tr("File %1 is valid JSON file, howewer - no \"commands\" JSON Array found.")
-                          .arg(fileName));
+                          .arg(filePath));
         return nullptr;
     }
 
     QJsonArray commandsArray = fileObject["commands"].toArray();
-    file.flush();
-    file.close();
 
     return CommandList::fromJsonArray(commandsArray);
 }
@@ -151,14 +168,17 @@ void CommandsListManager::_setCurrentCommandList(CommandList* newList)
     emit commandListChanged(p_currentCommandList);
 }
 
-void CommandsListManager::_setCurrentFileName(const QString& fileName)
+void CommandsListManager::_setCurrentFilePath(const QString& filePath)
 {
-    if ( (!m_currentFileName.isEmpty()) && (m_currentFileName != defaultNewFileName()) )
-        m_fileWatcher.removePath(m_currentFileName);
+    //If file opened - we do not need to monotor it anymore
+    if ( fileOpened() ) m_fileWatcher.removePath(m_currentFileInfo.fileName());
 
-    if ( (!fileName.isEmpty()) && (fileName != defaultNewFileName()) )
-        m_fileWatcher.addPath(fileName);
+    m_currentFileInfo        = QFileInfo(filePath);
+    m_lastFileModification   = m_currentFileInfo.lastModified();
 
-    m_currentFileName = fileName;
-    emit currentFileNameChanged(m_currentFileName);
+    //If new file was opened - we need to start monitoring for changes in it
+    if ( fileOpened() ) m_fileWatcher.addPath(filePath);
+
+    //Inform about changes
+    emit currentFileInfoChanged(m_currentFileInfo);
 }

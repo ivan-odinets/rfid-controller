@@ -38,6 +38,8 @@ public:
         : m_vendorId(0x0000), m_productId(0x0000) {}
     ~InputDeviceInfo() {}
 
+    static QList<InputDeviceInfo> availableInputDevices();
+
     bool       isValid() const;
 
     bool       hasVendorIdetifier() const                  { return m_vendorId != 0x0000; }
@@ -69,10 +71,14 @@ public:
     /*! @brief This method returns file name for this input device. Works only in Linux */
     QString deviceFileName() const                         { return m_deviceFileName; }
 
+    /*! @brief This method returns /dev/input directory */
+    static QDir inputDeviceDirectory()                     { return m_devInputDir; }
+
 private:
     QString m_deviceFilePath;
     QString m_deviceFileName;
 
+    static QDir              m_devInputDir;
     static QByteArray        _readSysFile(const QString& fileName);
     static bool              _hasVendorId(const QString& entry);
     static VendorId          _readVendorId(const QString& entry);

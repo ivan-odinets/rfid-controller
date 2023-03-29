@@ -38,7 +38,7 @@ class SerialDeviceManager : public QObject
 public:
     explicit SerialDeviceManager(QObject *parent = nullptr);
 
-    void                     start()                            { m_serialDeviceWatcher.start(); }
+    void                     start();
     void                     stop()                             { m_serialDeviceWatcher.stop(); }
     void                     updateSerialDeviceList()           { m_serialDeviceWatcher.updateDeviceList(); }
 

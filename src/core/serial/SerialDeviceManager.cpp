@@ -27,6 +27,26 @@ SerialDeviceManager::SerialDeviceManager(QObject *parent)
     connect(&m_serialDeviceWatcher,&SerialDeviceWatcher::deviceWasDetached,this,&SerialDeviceManager::_handleDetachedSerialDevice);
 }
 
+void SerialDeviceManager::start()
+{
+    //Automatically connect all devices, which are matching autoconnect criteria
+    if (p_settings->serialDeviceAutoconnection()) {   //If autoconnect enabled
+
+        //Go through attached device list and connect enything which is fitting autoconnect rules
+        for (const QSerialPortInfo& portInfo : m_serialDeviceWatcher.availableDevices()) {
+            if (!p_settings->serialDeviceFilter().isMatching(portInfo)) {
+                continue;
+            }
+
+            if (_tryOpeningSerialDevice(portInfo)) {
+                emit serialDeviceWasOpened(portInfo);
+            }
+        }
+    }
+
+    m_serialDeviceWatcher.start();
+}
+
 QList<QSerialPortInfo> SerialDeviceManager::openedSerialDevices() const
 {
     QList<QSerialPortInfo> result;

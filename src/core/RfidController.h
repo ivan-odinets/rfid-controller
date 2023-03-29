@@ -52,7 +52,7 @@ public:
     void           reloadCurrentCommandFile()                             { m_commandListManager.reloadCurrentCommandFile(); }
     void           saveCurrentCommandsListAs(const QString& fileName)     { m_commandListManager.saveCurrentCommandsListAs(fileName); }
     void           closeCurrentFile()                                     { m_commandListManager.closeCurrentFile(); };
-    QString        currentFileName() const                                { return m_commandListManager.currentFileName();}
+    QFileInfo      currentFileInfo() const                                { return m_commandListManager.currentFileInfo(); }
     QString        defaultNewFileName() const                             { return tr("Untitled.cmds"); }
     CommandList*   currentCommandsList()                                  { return m_commandListManager.currentCommandsList(); }
 
@@ -64,13 +64,15 @@ signals:
     void errorMessage(const QString& errorMessage);
 
     /*! @brief This signal is emitted when currently opened file was changed on disk by external program */
-    void commandsFileContentChanged();
+    void commandsFileModified();
 
     /*! @brief This signal is emitted when currently opened file was removed from disk by external program */
     void commandsFileRemoved();
 
-    /*! @brief This signal is emitted when name of currently opened file was changed. The content can be the same */
-    void commandsFileNameChanged(const QString& fileName);
+//    /*! @brief This signal is emitted when name of currently opened file was changed. The content can be the same */
+//    void commandsFileNameChanged(const QString& fileName);
+
+    void commandFileNameChanged(const QFileInfo& fileInfo);
 
     /*! @brief This signal is emitted when current command list was totally changed */
     void commandListChanged(CommandList* model);

@@ -23,6 +23,8 @@
 
 #include <QSize>
 
+#include "core/NotificationType.h"
+
 class MainWindowSettings : public virtual SettingsCore
 {
 public:
@@ -40,8 +42,20 @@ public:
     bool   minimizeOnClose() const               { return m_minimizeOnClose; }
     void   setMinimizeOnClose(bool state);
 
-    QString   notifyAboutOpenedDevices() const   { return m_notifyAboutOpenedDevices; }
-    void      setNotifyAboutOpenedDevices(const QString& notify);
+    Notification::Type  notifyAboutAttachedDevices() const { return m_notifyAboutAttachedDevices; }
+    void                setNotifyAboutAttachedDevices(Notification::Type newType);
+
+    Notification::Type  notifyAboutDetachedDevices() const { return m_notifyAboutDetachedDevices; }
+    void                setNotifyAboutDetachedDevices(Notification::Type newType);
+
+    Notification::Type  notifyAboutOpenedDevices() const   { return m_notifyAboutOpenedDevices; }
+    void                setNotifyAboutOpenedDevices(Notification::Type newType);
+
+    Notification::Type  notifyAboutClosedDevices() const   { return m_notifyAboutClosedDevices; }
+    void                setNotifyAboutClosedDevices(Notification::Type newType);
+
+    Notification::Type  notifyAboutErrors() const          { return m_notifyAboutErrors; }
+    void                setNotifyAboutErrors(Notification::Type newType);
 
     bool startHidden() const                     { return m_startHidden; }
     void setStartHidden(bool state);
@@ -59,11 +73,16 @@ protected:
 private:
     static MainWindowSettings* theOne;
 
-    QSize          m_windowSize;
-    bool           m_minimizeOnClose;
-    QString        m_notifyAboutOpenedDevices;
-    bool           m_startHidden;
-    QStringList    m_recentFiles;
+    QSize               m_windowSize;
+    bool                m_minimizeOnClose;
+    Notification::Type  m_notifyAboutAttachedDevices;
+    Notification::Type  m_notifyAboutDetachedDevices;
+    Notification::Type  m_notifyAboutOpenedDevices;
+    Notification::Type  m_notifyAboutClosedDevices;
+    Notification::Type  m_notifyAboutErrors;
+
+    bool                m_startHidden;
+    QStringList         m_recentFiles;
 
 #ifndef QT_NO_SYSTEMTRAYICON
 //

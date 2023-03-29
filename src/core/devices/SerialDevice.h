@@ -38,6 +38,7 @@ public:
 
     bool open(QIODevice::OpenMode openMode);
     void close();
+    bool isOpened() const;
 
     void setPortInfo(const QSerialPortInfo& portInfo)                { m_portInfo = portInfo; }
     void configureSerialPort(const SerialPortConfig& config)         { config.configureSerialPort(&m_port); }

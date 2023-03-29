@@ -32,6 +32,7 @@
 #include "appconfig/MainWindowSettings.h"
 #include "core/commands/CommandList.h"
 #include "core/RfidController.h"
+#include "menus/NotificationTypeMenu.h"
 #include "widgets/MonitorWidget.h"
 
 #ifdef HID
@@ -51,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     _setupUi();
     _loadSettings();
-    _connectController();
+    _connectController();   
 }
 
 MainWindow::~MainWindow()
@@ -64,46 +65,48 @@ void MainWindow::displayLastKey(const QString& key)
     w_centralWidget->displayLastKey(key);
 }
 
-void MainWindow::showErrorMessageBox(const QString& errorMessage)
+void MainWindow::showErrorMessage(const QString& errorMessage)
 {
-    QMessageBox::critical(this,tr("Error - %1")
-                          .arg(qApp->applicationName()),errorMessage);
+    if (p_windowSettings->notifyAboutErrors() == Notification::None)
+        return;
+
+    _showError(errorMessage,p_windowSettings->notifyAboutErrors());
 }
 
-void MainWindow::showInfoMessageBox(const QString& infoMessage)
+void MainWindow::commandsFileInfoChanged(const QFileInfo& newFileInfo)
 {
-    QMessageBox::information(this,tr("Info - %1").arg(qApp->applicationName()),
-                             infoMessage);
-}
-
-void MainWindow::commandsFileNameChanged(const QString& newFileName)
-{
-    if (newFileName.isEmpty()) {
+    if (newFileInfo.fileName().isEmpty()) {
         setWindowTitle(QString("%1[*]").arg(qApp->applicationName()));
         return;
     }
 
-    setWindowTitle(QString("%1 - %2[*]").arg(qApp->applicationName()).arg(newFileName));
-    if (newFileName == p_controller->defaultNewFileName())
+    setWindowTitle(QString("%1 - %2[*]").arg(qApp->applicationName()).arg(newFileInfo.fileName()));
+    if (newFileInfo.fileName() == p_controller->defaultNewFileName())
         return;
 
-    if (m_recentFiles.contains(newFileName))
+    if (m_recentFiles.contains(newFileInfo.filePath()))
         return;
 
-    m_recentFiles.append(newFileName);
-    _addRecentFileAction(newFileName);
+    m_recentFiles.append(newFileInfo.filePath());
+    _addRecentFileAction(newFileInfo.filePath());
 }
 
-void MainWindow::commandsFileChanged()
+void MainWindow::commandsFileModified()
 {
     const QMessageBox::StandardButton result = QMessageBox::question(this,qApp->applicationName(),
         tr("Current commands file edited on disk by external program. Reload file?"),
         QMessageBox::Yes|QMessageBox::No);
 
-    if (result == QMessageBox::Yes) {
+    switch (result) {
+    case QMessageBox::Yes:
         p_controller->reloadCurrentCommandFile();
-    } else {
+        return;
+    case QMessageBox::No:
         setWindowModified(true);
+        return;
+    default:
+        //This should not happen
+        Q_ASSERT(false);
     }
 }
 
@@ -113,8 +116,16 @@ void MainWindow::commandsFileRemoved()
         tr("Current commands file was removed from disk by external program. Save file?"),
         QMessageBox::Yes|QMessageBox::No);
 
-    if (result == QMessageBox::Yes)
+    switch (result) {
+    case QMessageBox::Yes:
         _saveCommandsFileAs();
+        return;
+    case QMessageBox::No:
+        setWindowModified(true);
+        return;
+    default:
+        Q_ASSERT(false);
+    }
 }
 
 void MainWindow::setCommandList(CommandList* commandsList)
@@ -179,7 +190,7 @@ void MainWindow::_openCommandsFile()
     if (!_maybeSave())
         return;
 
-    QFileInfo currentFileInfo(p_controller->currentFileName());
+    QFileInfo currentFileInfo = p_controller->currentFileInfo();
     QDir searchDir = (currentFileInfo.exists()) ? currentFileInfo.dir() : QDir::home();
 
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open commands file - %1").arg(qApp->applicationName()),
@@ -193,7 +204,7 @@ void MainWindow::_openCommandsFile()
 
 void MainWindow::_saveCommandsFile()
 {
-    QString fileName = p_controller->currentFileName();
+    QString fileName = p_controller->currentFileInfo().filePath();
     if (fileName.isEmpty()) {
         _saveCommandsFileAs();
         return;
@@ -205,7 +216,7 @@ void MainWindow::_saveCommandsFile()
 
 void MainWindow::_saveCommandsFileAs()
 {
-    QFileInfo currentFileInfo(p_controller->currentFileName());
+    QFileInfo currentFileInfo = p_controller->currentFileInfo();
     QDir searchDir = (currentFileInfo.exists()) ? currentFileInfo.dir() : QDir::home();
 
     QString fileName = QFileDialog::getSaveFileName(this,tr("Save commands file - %1").arg(qApp->applicationName()),
@@ -262,33 +273,29 @@ void MainWindow::_toggleStartHiddenOption(bool state)
     p_windowSettings->setStartHidden(state);
 }
 
-#define NO_NOTIFY_LITERAL    QStringLiteral("none")
-#define MSG_NOTIFY_LITERAL   QStringLiteral("msg")
-
-#ifndef QT_NO_SYSTEMTRAYICON
-    #define TRAY_NOTIFY_LITERAL  QStringLiteral("tray")
-#endif //QT_NO_SYSTEMTRAYICON
-
-void MainWindow::_toggleOpenedDeviceNotifyStatus(QAction* action)
+void MainWindow::_attachedDeviceNotifyStatusChanged(Notification::Type newStatus)
 {
-    switch (action->data().toInt()) {
-    case NoNotify:
-        p_windowSettings->setNotifyAboutOpenedDevices(NO_NOTIFY_LITERAL);
-        m_connectedDeviceNotification = NoNotify;
-        return;
-    case MsgNotify:
-        p_windowSettings->setNotifyAboutOpenedDevices(MSG_NOTIFY_LITERAL);
-        m_connectedDeviceNotification = MsgNotify;
-        return;
-#ifndef QT_NO_SYSTEMTRAYICON
-    case TrayNotify:
-        p_windowSettings->setNotifyAboutOpenedDevices(TRAY_NOTIFY_LITERAL);
-        m_connectedDeviceNotification = TrayNotify;
-        return;
-#endif //QT_NO_SYSTEMTRAYICON
-    }
+    p_windowSettings->setNotifyAboutAttachedDevices(newStatus);
+}
 
-    m_connectedDeviceNotification = UnknownNotify;
+void MainWindow::_detachedDeviceNotifyStatusChanged(Notification::Type newStatus)
+{
+    p_windowSettings->setNotifyAboutDetachedDevices(newStatus);
+}
+
+void MainWindow::_openedDeviceNotifyStatusChanged(Notification::Type newType)
+{
+    p_windowSettings->setNotifyAboutOpenedDevices(newType);
+}
+
+void MainWindow::_closedDeviceNotifyStatusChanged(Notification::Type newType)
+{
+    p_windowSettings->setNotifyAboutClosedDevices(newType);
+}
+
+void MainWindow::_errorNotificationStatusChanged(Notification::Type newType)
+{
+    p_windowSettings->setNotifyAboutErrors(newType);
 }
 
 /*
@@ -335,20 +342,11 @@ void MainWindow::_loadSettings()
 
     w_startHidden->setChecked(p_windowSettings->startHidden());
 
-    QString notifyStatus = p_windowSettings->notifyAboutOpenedDevices();
-    if (notifyStatus == NO_NOTIFY_LITERAL) {
-        m_connectedDeviceNotification = NoNotify;
-        w_noDeviceNotificationAction->setChecked(true);
-    } else if (notifyStatus == MSG_NOTIFY_LITERAL) {
-        m_connectedDeviceNotification = MsgNotify;
-        w_msgDeviceNotificationAction->setChecked(true);
-    }
-#ifndef QT_NO_SYSTEMTRAYICON
-    else if (notifyStatus == TRAY_NOTIFY_LITERAL) {
-        m_connectedDeviceNotification = TrayNotify;
-        w_trayDeviceNotificationAction->setChecked(true);
-    }
-#endif //QT_NO_SYSTEMTRAYICON
+    w_attachedDeviceNotificationMenu->setNotificationType(p_windowSettings->notifyAboutAttachedDevices());
+    w_detachedDeviceNotificationMenu->setNotificationType(p_windowSettings->notifyAboutDetachedDevices());
+    w_openedDeviceNotificationMenu->setNotificationType(p_windowSettings->notifyAboutOpenedDevices());
+    w_closedDeviceNotificationMenu->setNotificationType(p_windowSettings->notifyAboutClosedDevices());
+    w_errorMessage->setNotificationType(p_windowSettings->notifyAboutErrors());
 
 #ifdef HID
     w_autoconnectHidDevices->setChecked(p_controller->inputDeviceManager()->inputDeviceAutoconnection());
@@ -370,29 +368,52 @@ void MainWindow::_saveSettings()
     p_windowSettings->setRecentFiles(this->m_recentFiles);
 }
 
-void MainWindow::_addRecentFileAction(const QString& fileName)
+void MainWindow::_addRecentFileAction(const QString& filePath)
 {
-    QAction* recentFileAction = new QAction(fileName);
+    QAction* recentFileAction = new QAction(filePath);
     w_recentFilesMenu->insertAction(w_recentFilesSeparator,recentFileAction);
     w_recentFilesActions->addAction(recentFileAction);
 }
 
-void MainWindow::_notifyAboutDevice(const QString& messageText)
+void MainWindow::_showNotification(const QString& messageText,Notification::Type type)
 {
-    if (m_connectedDeviceNotification == NoNotify)
+    if (type == Notification::None)
         return;
 
-    if (m_connectedDeviceNotification == MsgNotify) {
-        showInfoMessageBox(messageText);
+    if (type == Notification::MessageBox) {
+        QMessageBox::information(this,tr("Info - %1").arg(qApp->applicationName()),
+                                 messageText);
         return;
     }
 
 #ifndef QT_NO_SYSTEMTRAYICON
-    if (m_connectedDeviceNotification == TrayNotify) {
+    if (type == Notification::Systemtray) {
         if (w_trayIcon == nullptr)
             return;
 
         w_trayIcon->showMessage(qApp->applicationName(),messageText);
+        return;
+    }
+#endif //QT_NO_SYSTEMTRAYICON
+}
+
+void MainWindow::_showError(const QString& messageText,Notification::Type type)
+{
+    if (type == Notification::None)
+        return;
+
+    if (type == Notification::MessageBox) {
+        QMessageBox::critical(this,tr("Error - %1").arg(qApp->applicationName()),
+                              messageText);
+        return;
+    }
+
+#ifndef QT_NO_SYSTEMTRAYICON
+    if (type == Notification::Systemtray) {
+        if (w_trayIcon == nullptr)
+            return;
+
+        w_trayIcon->showMessage(qApp->applicationName(),messageText,QSystemTrayIcon::Warning);
         return;
     }
 #endif //QT_NO_SYSTEMTRAYICON
@@ -408,7 +429,6 @@ bool MainWindow::_maybeSave()
                                    tr("The commands file has been modified.\n"
                                       "Do you want to save changes?"),
                                    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-    qDebug() << ret;
     switch (ret) {
     case QMessageBox::Save:
         _saveCommandsFile();
@@ -429,21 +449,54 @@ bool MainWindow::_maybeSave()
 
 #ifdef HID
 
-void MainWindow::_inputDeviceConnected(const InputDeviceInfo& deviceInfo)
+void MainWindow::_inputDeviceAttached(const InputDeviceInfo& deviceInfo)
 {
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    QString notificationText = tr("New HID device connected: %1\r\nVendorId=%2 ProductId=%3 Name=%4")
+    if (p_windowSettings->notifyAboutAttachedDevices() == Notification::None)
+        return;
+
+    QString notificationText = tr("New HID device attached: %1\r\nVendorId=%2 ProductId=%3 Name=%4")
             .arg(deviceInfo.deviceFilePath())
             .arg(deviceInfo.vendorId())
             .arg(deviceInfo.productId())
             .arg(deviceInfo.deviceName());
-#elif defined(Q_OS_WINDOWS)
-    #error("Windows builds currently not supported")
-#elif
-    #error("Builds for other platforms are not supported")
-#endif
 
-    _notifyAboutDevice(notificationText);
+    _showNotification(notificationText,p_windowSettings->notifyAboutAttachedDevices());
+}
+
+void MainWindow::_inputDeviceDetached(const InputDeviceInfo& deviceInfo)
+{
+    if (p_windowSettings->notifyAboutAttachedDevices() == Notification::None)
+        return;
+
+    QString notificationText = tr("HID device detached: %1\r\nVendorId=%2 ProductId=%3 Name=%4")
+            .arg(deviceInfo.deviceFilePath())
+            .arg(deviceInfo.vendorId())
+            .arg(deviceInfo.productId())
+            .arg(deviceInfo.deviceName());
+
+    _showNotification(notificationText,p_windowSettings->notifyAboutDetachedDevices());
+}
+
+void MainWindow::_inputDeviceOpened(const InputDeviceInfo& deviceInfo)
+{
+    QString notificationText = tr("HID device opened: %1\r\nVendorId=%2 ProductId=%3 Name=%4")
+            .arg(deviceInfo.deviceFilePath())
+            .arg(deviceInfo.vendorId())
+            .arg(deviceInfo.productId())
+            .arg(deviceInfo.deviceName());
+
+    _showNotification(notificationText,p_windowSettings->notifyAboutOpenedDevices());
+}
+
+void MainWindow::_inputDeviceClosed(const InputDeviceInfo& deviceInfo)
+{
+    QString notificationText = tr("HID device closed: %1\r\nVendorId=%2 ProductId=%3 Name=%4")
+            .arg(deviceInfo.deviceFilePath())
+            .arg(deviceInfo.vendorId())
+            .arg(deviceInfo.productId())
+            .arg(deviceInfo.deviceName());
+
+    _showNotification(notificationText,p_windowSettings->notifyAboutClosedDevices());
 }
 
 void MainWindow::_configureInputFilter()
@@ -470,17 +523,50 @@ void MainWindow::_configureInputFilter()
 
 #ifdef SERIAL
 
-void MainWindow::_serialDeviceConnected(const QSerialPortInfo& portInfo)
+void MainWindow::_serialDeviceAttached(const QSerialPortInfo& portInfo)
 {
-    if (m_connectedDeviceNotification == NoNotify)
+    if (p_windowSettings->notifyAboutAttachedDevices() == Notification::None)
         return;
 
-    QString notificationText = tr("New Serial device connected\r\nVendorId=%1 ProductId=%2 Name=%3")
-            .arg(portInfo.vendorIdentifier())
-            .arg(portInfo.productIdentifier())
+    QString notificationText = tr("New serial device attached\r\nVendorId=%1 ProductId=%2 Name=%3")
+            .arg(QString::number(portInfo.vendorIdentifier(),16))
+            .arg(QString::number(portInfo.productIdentifier(),16))
             .arg(portInfo.portName());
 
-    _notifyAboutDevice(notificationText);
+    _showNotification(notificationText,p_windowSettings->notifyAboutAttachedDevices());
+}
+
+void MainWindow::_serialDeviceDetached(const QSerialPortInfo& portInfo)
+{
+    if (p_windowSettings->notifyAboutDetachedDevices() == Notification::None)
+        return;
+
+    QString notificationText = tr("Serial device detached\r\nVendorId=%1 ProductId=%2 Name=%3")
+            .arg(QString::number(portInfo.vendorIdentifier(),16))
+            .arg(QString::number(portInfo.productIdentifier(),16))
+            .arg(portInfo.portName());
+
+    _showNotification(notificationText,p_windowSettings->notifyAboutDetachedDevices());
+}
+
+void MainWindow::_serialDeviceOpened(const QSerialPortInfo& portInfo)
+{
+    QString notificationText = tr("Serial device opened\r\nVendorId=%1 ProductId=%2 Name=%3")
+            .arg(QString::number(portInfo.vendorIdentifier(),16))
+            .arg(QString::number(portInfo.productIdentifier(),16))
+            .arg(portInfo.portName());
+
+    _showNotification(notificationText,p_windowSettings->notifyAboutOpenedDevices());
+}
+
+void MainWindow::_serialDeviceClosed(const QSerialPortInfo& portInfo)
+{
+    QString notificationText = tr("Serial device closed\r\nVendorId=%1 ProductId=%2 Name=%3")
+            .arg(QString::number(portInfo.vendorIdentifier(),16))
+            .arg(QString::number(portInfo.productIdentifier(),16))
+            .arg(portInfo.portName());
+
+    _showNotification(notificationText,p_windowSettings->notifyAboutClosedDevices());
 }
 
 void MainWindow::_configureSerialParameters()
@@ -682,25 +768,26 @@ void MainWindow::_setupMenus()
     w_startHidden->setCheckable(true);
     connect(w_startHidden,&QAction::triggered,this,&MainWindow::_toggleStartHiddenOption);
 
-    QMenu* deviceNotificationMenu = new QMenu(tr("Inform about connected devices"));
-    QActionGroup* w_deviceNotificationActionGroup = new QActionGroup(this);
-    w_deviceNotificationActionGroup->setExclusive(true);
-    w_noDeviceNotificationAction = deviceNotificationMenu->addAction(tr("No notification"));
-    w_noDeviceNotificationAction->setData(NoNotify);
-    w_noDeviceNotificationAction->setCheckable(true);
-    w_deviceNotificationActionGroup->addAction(w_noDeviceNotificationAction);
-    w_msgDeviceNotificationAction = deviceNotificationMenu->addAction(tr("Messagebox notification"));
-    w_msgDeviceNotificationAction->setData(MsgNotify);
-    w_msgDeviceNotificationAction->setCheckable(true);
-    w_deviceNotificationActionGroup->addAction(w_msgDeviceNotificationAction);
-#ifndef QT_NO_SYSTEMTRAYICON
-    w_trayDeviceNotificationAction = deviceNotificationMenu->addAction(tr("Systray notification"));
-    w_trayDeviceNotificationAction->setData(TrayNotify);
-    w_trayDeviceNotificationAction->setCheckable(true);
-    w_deviceNotificationActionGroup->addAction(w_trayDeviceNotificationAction);
-#endif //QT_NO_SYSTEMTRAYICON
-    connect(w_deviceNotificationActionGroup,&QActionGroup::triggered,this,&MainWindow::_toggleOpenedDeviceNotifyStatus);
-    settingsMenu->addMenu(deviceNotificationMenu);
+    QMenu* notificationMenu = new QMenu(tr("Notifications"));
+
+    w_attachedDeviceNotificationMenu = new NotificationMenu(tr("Attached devices"));
+    connect(w_attachedDeviceNotificationMenu,&NotificationMenu::notificationTypeChanged,this,&MainWindow::_attachedDeviceNotifyStatusChanged);
+    notificationMenu->addMenu(w_attachedDeviceNotificationMenu);
+    w_detachedDeviceNotificationMenu = new NotificationMenu(tr("Detached devices"));
+    connect(w_detachedDeviceNotificationMenu,&NotificationMenu::notificationTypeChanged,this,&MainWindow::_detachedDeviceNotifyStatusChanged);
+    notificationMenu->addMenu(w_detachedDeviceNotificationMenu);
+
+    w_openedDeviceNotificationMenu = new NotificationMenu(tr("Opened devices"));
+    connect(w_openedDeviceNotificationMenu,&NotificationMenu::notificationTypeChanged,this,&MainWindow::_openedDeviceNotifyStatusChanged);
+    notificationMenu->addMenu(w_openedDeviceNotificationMenu);
+    w_closedDeviceNotificationMenu = new NotificationMenu(tr("Closed devices"));
+    connect(w_closedDeviceNotificationMenu,&NotificationMenu::notificationTypeChanged,this,&MainWindow::_closedDeviceNotifyStatusChanged);
+    notificationMenu->addMenu(w_closedDeviceNotificationMenu);
+    w_errorMessage = new NotificationMenu(tr("Error messages"));
+    connect(w_errorMessage,&NotificationMenu::notificationTypeChanged,this,&MainWindow::_errorNotificationStatusChanged);
+    notificationMenu->addMenu(w_errorMessage);
+
+    settingsMenu->addMenu(notificationMenu);
 
 #ifndef QT_NO_SYSTEMTRAYICON
     // No tray - no need to have option "minimize to tray"
@@ -746,7 +833,7 @@ void MainWindow::_setupMenus()
 void MainWindow::_connectController()
 {
     //Error handling
-    connect(p_controller,&RfidController::errorMessage,this,&MainWindow::showErrorMessageBox);
+    connect(p_controller,&RfidController::errorMessage,this,&MainWindow::showErrorMessage);
 
     //New key discovery
     connect(p_controller,&RfidController::keyFound,this,&MainWindow::displayLastKey);
@@ -756,29 +843,35 @@ void MainWindow::_connectController()
 
     //Handling changes in CommandFile name and state
     connect(p_controller,&RfidController::commandsFileRemoved,this,&MainWindow::commandsFileRemoved);
-    connect(p_controller,&RfidController::commandsFileNameChanged,this,&MainWindow::commandsFileNameChanged);
-    connect(p_controller,&RfidController::commandsFileContentChanged,this,&MainWindow::commandsFileChanged);
+    connect(p_controller,&RfidController::commandFileNameChanged,this,&MainWindow::commandsFileInfoChanged);
+    connect(p_controller,&RfidController::commandsFileModified,this,&MainWindow::commandsFileModified);
 
 #ifdef HID
     //
     //Input devices
     //
 
+    //Add devices, which are already attached to the system
+    w_inputDeviceSelectorMenu->setCurrentInputDeviceList(p_controller->inputDeviceManager()->availableInputDevices());
+
     //Refreshing
     connect(w_inputDeviceSelectorMenu,&InputDeviceSelectorMenu::updateRequested,p_controller->inputDeviceManager(),&InputDeviceManager::updateInputDeviceList);
 
     //Handle attached input devices
     connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasAttached,w_inputDeviceSelectorMenu,&InputDeviceSelectorMenu::deviceWasAttached);
+    connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasAttached,this,&MainWindow::_inputDeviceAttached);
 
     //Handle detached input devices
     connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasDetached,w_inputDeviceSelectorMenu,&InputDeviceSelectorMenu::deviceWasDetached);
+    connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasDetached,this,&MainWindow::_inputDeviceDetached);
 
     //Handle opened input devices
     connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasOpened,w_inputDeviceSelectorMenu,&InputDeviceSelectorMenu::deviceWasOpened);
-    connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasOpened,this,&MainWindow::_inputDeviceConnected);
+    connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasOpened,this,&MainWindow::_inputDeviceOpened);
 
     //Handle closed input devices
     connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasClosed,w_inputDeviceSelectorMenu,&InputDeviceSelectorMenu::deviceWasClosed);
+    connect(p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceWasClosed,this,&MainWindow::_inputDeviceClosed);
 
     //Handle opening and closure of input devices by user
     connect(w_inputDeviceSelectorMenu,&InputDeviceSelectorMenu::deviceOpeningRequested,p_controller->inputDeviceManager(),&InputDeviceManager::inputDeviceOpeningRequested);
@@ -792,22 +885,26 @@ void MainWindow::_connectController()
     //
     //Serial devices
     //
+    w_serialDeviceSelectorMenu->setCurrentSerialDeviceList(p_controller->serialDeviceManager()->availableDevices());
 
     //Refreshing
     connect(w_serialDeviceSelectorMenu,&SerialDeviceSelectorMenu::updateRequested,p_controller->serialDeviceManager(),&SerialDeviceManager::updateSerialDeviceList);
 
     //Handle attached serial devices
     connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasAttached,w_serialDeviceSelectorMenu,&SerialDeviceSelectorMenu::deviceWasAttached);
+    connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasAttached,this,&MainWindow::_serialDeviceAttached);
 
     //Handle detached serial devices
     connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasDetached,w_serialDeviceSelectorMenu,&SerialDeviceSelectorMenu::deviceWasDetached);
+    connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasDetached,this,&MainWindow::_serialDeviceDetached);
 
     //Handle opened serial devices
     connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasOpened,w_serialDeviceSelectorMenu,&SerialDeviceSelectorMenu::deviceWasOpened);
-    connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasOpened,this,&MainWindow::_serialDeviceConnected);
+    connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasOpened,this,&MainWindow::_serialDeviceOpened);
 
     //Handle closed serial devices
     connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasClosed,w_serialDeviceSelectorMenu,&SerialDeviceSelectorMenu::deviceWasClosed);
+    connect(p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceWasClosed,this,&MainWindow::_serialDeviceClosed);
 
     //Handle opening and closing of serial devices by user
     connect(w_serialDeviceSelectorMenu,&SerialDeviceSelectorMenu::deviceOpeningRequested,p_controller->serialDeviceManager(),&SerialDeviceManager::serialDeviceOpeningRequested);

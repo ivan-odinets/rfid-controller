@@ -4,7 +4,7 @@ This application allow executing commands based on readings from devices connect
 
 Icons used: [Rfid icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/rfid)
 
-Version: 0.1.0
+Version: 0.1.1
 
 ## Features
 
