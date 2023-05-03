@@ -1,30 +1,33 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "InputDeviceManagerSettings.h"
 
-#define INPUT_AUTOCONNECT         QStringLiteral("input/autoconnect")
-#define HIDE_SYSTEM_HIDS          QStringLiteral("input/hideSystemDevices")
-#define INPUT_FILTER_VID          QStringLiteral("input/vendorIdList")
-#define INPUT_FILTER_PID          QStringLiteral("input/productIdList")
+static const QLatin1String INPUT_AUTOCONNECT(    "input/autoconnect"           );
+static const QLatin1String INPUT_FILTER_VID(     "input/vendorIdList"          );
+static const QLatin1String INPUT_FILTER_PID(     "input/productIdList"         );
 
 #if defined(Q_OS_LINUX)
-    #define DEVICE_FILE_NAME      QStringLiteral("input/deviceFileNames")
+static const QLatin1String DEVICE_FILE_NAME(     "input/deviceFileNames"       );
 #elif defined(Q_OS_WINDOWS)
     #error("Windows builds currently not supported")
 #else
@@ -33,13 +36,7 @@
 
 InputDeviceManagerSettings* InputDeviceManagerSettings::theOne = nullptr;
 
-InputDeviceManagerSettings::InputDeviceManagerSettings()
-{
-    Q_ASSERT(theOne == nullptr);
-    theOne = this;
-}
-
-void InputDeviceManagerSettings::loadValues()
+void InputDeviceManagerSettings::_loadValues()
 {
     m_inputDeviceAutoconnection = _value(INPUT_AUTOCONNECT).toBool();
 

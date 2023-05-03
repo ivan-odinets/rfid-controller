@@ -1,18 +1,22 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -36,11 +40,34 @@ RfidController::RfidController(QObject *parent)
 #ifdef HID
     connect(&m_inputDeviceManager,&InputDeviceManager::keyFound,this,&RfidController::_keyDiscovered);
     connect(&m_inputDeviceManager,&InputDeviceManager::errorMessage,this,&RfidController::errorMessage);
+
+#ifdef LOG
+    connect(&m_inputDeviceManager,&InputDeviceManager::inputDeviceWasAttached,&m_logger,&Logger::logAttachedInputDevice);
+    connect(&m_inputDeviceManager,&InputDeviceManager::inputDeviceWasDetached,&m_logger,&Logger::logDetachedInputDevice);
+
+    connect(&m_inputDeviceManager,&InputDeviceManager::inputDeviceWasOpened,&m_logger,&Logger::logOpenedInputDevice);
+    connect(&m_inputDeviceManager,&InputDeviceManager::inputDeviceWasClosed,&m_logger,&Logger::logClosedInputDevice);
+
+    connect(&m_inputDeviceManager,&InputDeviceManager::errorMessage,&m_logger,&Logger::logErrorMessage);
+#endif //LOG
+
 #endif //HID
 
 #ifdef SERIAL
     connect(&m_serialDeviceManager,&SerialDeviceManager::keyFound,this,&RfidController::_keyDiscovered);
     connect(&m_serialDeviceManager,&SerialDeviceManager::errorMessage,this,&RfidController::errorMessage);
+
+#ifdef LOG
+    m_logger.currentLogFileChanged(RfidControllerSettings::get()->logFile());
+
+    connect(&m_serialDeviceManager,&SerialDeviceManager::serialDeviceWasAttached,&m_logger,&Logger::logAttachedSerialDevice);
+    connect(&m_serialDeviceManager,&SerialDeviceManager::serialDeviceWasDetached,&m_logger,&Logger::logDetachedSerialDevice);
+
+    connect(&m_serialDeviceManager,&SerialDeviceManager::serialDeviceWasOpened,&m_logger,&Logger::logOpenedSerialDevice);
+    connect(&m_serialDeviceManager,&SerialDeviceManager::serialDeviceWasClosed,&m_logger,&Logger::logClosedSerialDevice);
+
+    connect(&m_serialDeviceManager,&SerialDeviceManager::errorMessage,&m_logger,&Logger::logErrorMessage);
+#endif //LOG
 
 #endif //SERIAL
 
@@ -60,6 +87,10 @@ RfidController::~RfidController()
 
 void RfidController::start()
 {
+#ifdef LOG
+    m_logger.start();
+#endif //LOG
+
 #ifdef HID
     m_inputDeviceManager.start();
 #endif //HID
@@ -93,4 +124,8 @@ void RfidController::_keyDiscovered(const QString& key)
     }
 
     emit keyFound(key);
+
+#ifdef LOG
+    m_logger.logKey(key);
+#endif //LOG
 }

@@ -1,40 +1,45 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "MainWindowSettings.h"
 
-#define MINIMIZE_ON_CLOSE         QStringLiteral("gui/minimizeOnClose")
-#define WINDOW_SIZE               QStringLiteral("gui/windowSize")
-#define RECENT_FILES              QStringLiteral("gui/recentFiles")
-#define START_HIDDEN              QStringLiteral("gui/startHidden")
-#define NOTIFY_ATTACHED_DEVS      QStringLiteral("gui/notifyAttachedDevices")
-#define NOTIFY_DETACHED_DEVS      QStringLiteral("gui/notifyDetachedDevices")
-#define NOTIFY_OPENED_DEVS        QStringLiteral("gui/notifyOpenedDevices")
-#define NOTIFY_CLOSED_DEVS        QStringLiteral("gui/notifyClosedDevices")
-#define NOTIFY_ERRORS             QStringLiteral("gui/notifyErrors")
+static const QLatin1String MINIMIZE_ON_CLOSE(    "gui/minimizeOnClose"         );
+static const QLatin1String WINDOW_SIZE(          "gui/windowSize"              );
+static const QLatin1String RECENT_FILES(         "gui/recentFiles"             );
+static const QLatin1String START_HIDDEN(         "gui/startHidden"             );
+static const QLatin1String NOTIFY_ATTACHED_DEVS( "gui/notifyAttachedDevices"   );
+static const QLatin1String NOTIFY_DETACHED_DEVS( "gui/notifyDetachedDevices"   );
+static const QLatin1String NOTIFY_OPENED_DEVS(   "gui/notifyOpenedDevices"     );
+static const QLatin1String NOTIFY_CLOSED_DEVS(   "gui/notifyClosedDevices"     );
+static const QLatin1String NOTIFY_ERRORS(        "gui/notifyErrors"            );
+static const QLatin1String ACTIVE_WIDGET(        "gui/activeWidget"            );
 
 #ifndef QT_NO_SYSTEMTRAYICON
-    #define MINIMIZE_TO_TRAY      QStringLiteral("gui/minimizeToTray")
+static const QLatin1String MINIMIZE_TO_TRAY(     "gui/minimizeToTray"          );
 #endif //QT_NO_SYSTEMTRAYICON
 
 MainWindowSettings* MainWindowSettings::theOne = nullptr;
 
-void MainWindowSettings::loadValues()
+void MainWindowSettings::_loadValues()
 {
     m_windowSize                  = _value(WINDOW_SIZE).toSize();
     m_minimizeOnClose             = _value(MINIMIZE_ON_CLOSE,true).toBool();
@@ -57,9 +62,17 @@ void MainWindowSettings::loadValues()
     m_startHidden                 = _value(START_HIDDEN,false).toBool();
     m_recentFiles                 = _value(RECENT_FILES).toStringList();
 
+#ifdef LOG
+    m_activeWidget                = _value(ACTIVE_WIDGET,0).toInt();
+#endif //LOG
+
 #ifndef QT_NO_SYSTEMTRAYICON
     m_minimizeToTray              = _value(MINIMIZE_TO_TRAY,true).toBool();
 #endif //QT_NO_SYSTEMTRAYICON
+
+#ifdef LOG
+    LoggerWidgetSettings::_loadValues();
+#endif
 }
 
 void MainWindowSettings::setWindowSize(const QSize &windowSize)
@@ -115,6 +128,19 @@ void MainWindowSettings::setRecentFiles(const QStringList& recentFiles)
     m_recentFiles = recentFiles;
     _setValue(RECENT_FILES,QVariant(recentFiles));
 }
+
+#ifdef LOG
+//
+// This part is needed only if we have Logging support enabled
+//
+
+void MainWindowSettings::setActiveWidget(int index)
+{
+    m_activeWidget = index;
+    _setValue(ACTIVE_WIDGET,index);
+}
+
+#endif //LOG
 
 #ifndef QT_NO_SYSTEMTRAYICON
 //

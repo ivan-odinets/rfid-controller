@@ -1,43 +1,41 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "SerialDeviceManagerSettings.h"
 
-#define DEFAULT_BAUD_RATE           QStringLiteral("serial/defaultBaudRate")
-#define DEFAULT_DATA_BITS           QStringLiteral("serial/defaultDataBits")
-#define DEFAULT_FLOW_CONTROL        QStringLiteral("serial/defaultFlowControl")
-#define DEFAULT_PARITY              QStringLiteral("serial/defaultParity")
-#define DEFAULT_STOP_BITS           QStringLiteral("serial/defaultStopBits")
+static const QLatin1String DEFAULT_BAUD_RATE(    "serial/defaultBaudRate"      );
+static const QLatin1String DEFAULT_DATA_BITS(    "serial/defaultDataBits"      );
+static const QLatin1String DEFAULT_FLOW_CONTROL( "serial/defaultFlowControl"   );
+static const QLatin1String DEFAULT_PARITY(       "serial/defaultParity"        );
+static const QLatin1String DEFAULT_STOP_BITS(    "serial/defaultStopBits"      );
 
-#define SERIAL_AUTOCONNECT          QStringLiteral("serial/autoconnect")
-#define SERIAL_PORT_NAMES           QStringLiteral("serial/portNames")
-#define SERIAL_FILTER_VID           QStringLiteral("serial/vendorIdList")
-#define SERIAL_FILTER_PID           QStringLiteral("serial/productIdList")
+static const QLatin1String SERIAL_AUTOCONNECT(   "serial/autoconnect");
+static const QLatin1String SERIAL_PORT_NAMES(    "serial/portNames");
+static const QLatin1String SERIAL_FILTER_VID(    "serial/vendorIdList");
+static const QLatin1String SERIAL_FILTER_PID(    "serial/productIdList");
 
 SerialDeviceManagerSettings* SerialDeviceManagerSettings::theOne = nullptr;
 
-SerialDeviceManagerSettings::SerialDeviceManagerSettings()
-{
-    Q_ASSERT(theOne == nullptr);
-    theOne = this;
-}
-
-void SerialDeviceManagerSettings::loadValues()
+void SerialDeviceManagerSettings::_loadValues()
 {
     m_serialPortConfig.setBaudRate(_value(DEFAULT_BAUD_RATE,QSerialPort::Baud9600).value<QSerialPort::BaudRate>());
     m_serialPortConfig.setDataBits(_value(DEFAULT_DATA_BITS,QSerialPort::Data5).value<QSerialPort::DataBits>());

@@ -1,31 +1,43 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef MAINWINDOWSETTINGS_H
 #define MAINWINDOWSETTINGS_H
 
-#include "SettingsCore.h"
+#ifdef LOG
+    #include "LoggerWidgetSettings.h"
+#else
+    #include "SettingsCore.h"
+#endif
 
 #include <QSize>
 
 #include "core/NotificationType.h"
 
+#ifdef LOG
+class MainWindowSettings : public virtual LoggerWidgetSettings
+#else
 class MainWindowSettings : public virtual SettingsCore
+#endif
 {
 public:
     static MainWindowSettings* get() {
@@ -33,8 +45,6 @@ public:
         return theOne;
     }
     virtual ~MainWindowSettings() {};
-
-    void loadValues();
 
     QSize  windowSize() const                    { return m_windowSize; }
     void   setWindowSize(const QSize& windowSize);
@@ -69,6 +79,7 @@ protected:
         Q_ASSERT(theOne == nullptr);
         theOne = this;
     }
+    void _loadValues();
 
 private:
     static MainWindowSettings* theOne;
@@ -84,6 +95,20 @@ private:
     bool                m_startHidden;
     QStringList         m_recentFiles;
 
+#ifdef LOG
+//
+// This part is needed only if we have Logging support enabled
+//
+
+public:
+    int activeWidget() const                     { return m_activeWidget; }
+    void setActiveWidget(int index);
+
+private:
+    int                 m_activeWidget;
+
+#endif //LOG
+
 #ifndef QT_NO_SYSTEMTRAYICON
 //
 // This part is needed only if we have SystemTray support enabled
@@ -97,5 +122,6 @@ private:
     bool   m_minimizeToTray;
 #endif //QT_NO_SYSTEMTRAYICON
 };
+#define mainWindowSettings MainWindowSettings::get()
 
 #endif // MAINWINDOWSETTINGS_H

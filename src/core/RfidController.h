@@ -1,18 +1,22 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -21,19 +25,28 @@
 
 #include <QObject>
 
-#include "./core/CommandListManager.h"
+#include "core/CommandListManager.h"
 
 #ifdef HID
-    #include "./core/input/InputDeviceManager.h"
+    #include "core/input/InputDeviceManager.h"
 #endif //HID
 
 #ifdef SERIAL
-    #include "./core/serial/SerialDeviceManager.h"
+    #include "core/serial/SerialDeviceManager.h"
 #endif //SERIAL
 
 #ifdef NFC
-    #include "./core/nfc/NfcManager.h"
+    #include "core/nfc/NfcManager.h"
 #endif //NFC
+
+#ifdef LOG
+    #include "Logger.h"
+#endif //LOG
+
+/*!
+ *  @class RfidController core/RfidController.h
+ *  @brief Main class where almost everything is happening.
+ */
 
 class RfidController : public QObject
 {
@@ -47,10 +60,19 @@ public:
 
     void start();
 
+    /*! @brief This method creates new CommandList. See CommandListManager::newCommandList. */
     void           newCommandList()                                       { m_commandListManager.newCommandList(); }
+
+    /*! @brief Open file fileName, load CommandList from it. See CommandListManager::openCommandListFile. */
     void           openCommandListFile(const QString& fileName)           { m_commandListManager.openCommandListFile(fileName); }
+
+    /*! @brief Reloads CommandList from currently opened file See CommandListManager::reloadCurrentCommandFile. */
     void           reloadCurrentCommandFile()                             { m_commandListManager.reloadCurrentCommandFile(); }
+
+    /*! @brief Saves current CommandList as fileName. See CommandListManager::saveCurrentCommandsListAs. */
     void           saveCurrentCommandsListAs(const QString& fileName)     { m_commandListManager.saveCurrentCommandsListAs(fileName); }
+
+    /*! @brief Deletes current CommandList and closes current file. See CommandListManager::closeCurrentFile. */
     void           closeCurrentFile()                                     { m_commandListManager.closeCurrentFile(); };
     QFileInfo      currentFileInfo() const                                { return m_commandListManager.currentFileInfo(); }
     QString        defaultNewFileName() const                             { return tr("Untitled.cmds"); }
@@ -121,6 +143,18 @@ public:
 private:
     NfcManager          m_nfcManager;
 #endif //NFC
+
+#ifdef LOG
+//
+// This part is needed only if we have Logging support enabled
+//
+
+public:
+    Logger*             logger() { return &m_logger; }
+
+private:
+    Logger              m_logger;
+#endif //LOG
 };
 
 #endif // RFIDCONTROLLER_H

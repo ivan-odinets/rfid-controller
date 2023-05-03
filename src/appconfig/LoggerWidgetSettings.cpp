@@ -20,25 +20,19 @@
  *
  */
 
-#include "NfcManager.h"
+#include "LoggerWidgetSettings.h"
 
-NfcManager::NfcManager(QObject *parent)
-    : QObject{parent}
-{}
+LoggerWidgetSettings* LoggerWidgetSettings::theOne = nullptr;
 
-void NfcManager::start()
+static const QLatin1String LOG_TO_WIDGET(   "logWidget/logToWidget"  );
+
+void LoggerWidgetSettings::_loadValues()
 {
-    m_nfcManager.startTargetDetection();
+    m_logToWidget = _value(LOG_TO_WIDGET).toBool();
 }
 
-void NfcManager::stop()
+void LoggerWidgetSettings::setLogToWidget(bool state)
 {
-    m_nfcManager.stopTargetDetection();
-}
-
-void NfcManager::_nfcTargetDetected(QNearFieldTarget* target)
-{
-    emit keyFound(target->uid());
-
-    target->deleteLater();
+    m_logToWidget = state;
+    _setValue(LOG_TO_WIDGET,state);
 }

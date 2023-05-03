@@ -1,18 +1,22 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -46,12 +50,12 @@ public:
     QList<QSerialPortInfo>   availableDevices() const           { return QSerialPortInfo::availablePorts(); }
 
     void                     setDefaultPortConfig(const SerialPortConfig& config);
-    SerialPortConfig         defaultPortConfig()                { return p_settings->defaultSerialPortConfiguration(); }
+    SerialPortConfig         defaultPortConfig()                { return serialDeviceManagerSettings->defaultSerialPortConfiguration(); }
 
-    bool                     serialDeviceAutoconnection() const { return p_settings->serialDeviceAutoconnection(); }
+    bool                     serialDeviceAutoconnection() const { return serialDeviceManagerSettings->serialDeviceAutoconnection(); }
     void                     setSerialDeviceAutoconnection(bool state);
 
-    SerialPortFilter         serialDeviceFilter()               { return p_settings->serialDeviceFilter(); }
+    SerialPortFilter         serialDeviceFilter()               { return serialDeviceManagerSettings->serialDeviceFilter(); }
     void                     setSerialDeviceFilter(const SerialPortFilter& newFilter);
     void                     appendSerialDeviceFilter(const SerialPortFilter& filter);
 
@@ -82,7 +86,6 @@ private slots:
     void _serialDeviceErrorOccured(QSerialPort::SerialPortError error);
 
 private:
-    SerialDeviceManagerSettings*  p_settings;
     SerialDeviceWatcher           m_serialDeviceWatcher;
     QList<SerialDevice*>          m_openedSerialDevices;
     bool _tryOpeningSerialDevice(const QSerialPortInfo& portInfo);

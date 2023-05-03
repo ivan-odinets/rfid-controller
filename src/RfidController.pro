@@ -3,7 +3,7 @@
 #
 
 DEFINES  += APP_NAME='\\"RFID\ Controller\\"'
-DEFINES  += APP_VERSION='\\"0.1.1\\"'
+DEFINES  += APP_VERSION='\\"0.1.2\\"'
 
 #Comment this disable support of HID devices (e.g. USB based rfid readers)
 DEFINES  += HID
@@ -17,8 +17,11 @@ DEFINES  += SERIAL
 #Uncomment this to enable GUI support
 DEFINES  += GUI
 
+#Comment this to disable logging support
+DEFINES += LOG
+
 #Comment this to enable support of systemtray
-#DEFINES  += QT_NO_SYSTEMTRAYICON
+\DEFINES  += QT_NO_SYSTEMTRAYICON
 
 CONFIG(release, debug|release) : DEFINES += QT_NO_DEBUG_OUTPUT
 
@@ -133,6 +136,21 @@ contains(DEFINES, NFC) {
 }
 
 #
+# If we have Logging support enabled - we need these files
+#
+
+contains(DEFINES, LOG) {
+
+    HEADERS += \
+        appconfig/LoggerSettings.h \
+        core/Logger.h
+
+    SOURCES += \
+        appconfig/LoggerSettings.cpp \
+        core/Logger.cpp
+}
+
+#
 # If we have GUI support enabled - we need these files
 #
 
@@ -182,4 +200,17 @@ contains(DEFINES, GUI) {
             windows/SerialFilterEditDialog.cpp \
             windows/SerialPortConfiguratorDialog.cpp
     } # GUI + SERIAL
+
+    contains(DEFINES, LOG) {
+        HEADERS += \
+            appconfig/LoggerWidgetSettings.h \
+            menus/LoggingMenu.h \
+            widgets/LogWidget.h
+
+        SOURCES += \
+            appconfig/LoggerWidgetSettings.cpp \
+            menus/LoggingMenu.cpp \
+            widgets/LogWidget.cpp
+    } # GUI + LOG
+
 } #GUI

@@ -1,18 +1,22 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -21,7 +25,7 @@
 #include <QDebug>
 
 SerialDeviceManager::SerialDeviceManager(QObject *parent)
-    : QObject{parent},p_settings(SerialDeviceManagerSettings::get())
+    : QObject{parent}
 {
     connect(&m_serialDeviceWatcher,&SerialDeviceWatcher::deviceWasAttached,this,&SerialDeviceManager::_handleAttachedSerialDevice);
     connect(&m_serialDeviceWatcher,&SerialDeviceWatcher::deviceWasDetached,this,&SerialDeviceManager::_handleDetachedSerialDevice);
@@ -30,11 +34,11 @@ SerialDeviceManager::SerialDeviceManager(QObject *parent)
 void SerialDeviceManager::start()
 {
     //Automatically connect all devices, which are matching autoconnect criteria
-    if (p_settings->serialDeviceAutoconnection()) {   //If autoconnect enabled
+    if (serialDeviceManagerSettings->serialDeviceAutoconnection()) {   //If autoconnect enabled
 
         //Go through attached device list and connect enything which is fitting autoconnect rules
         for (const QSerialPortInfo& portInfo : m_serialDeviceWatcher.availableDevices()) {
-            if (!p_settings->serialDeviceFilter().isMatching(portInfo)) {
+            if (!serialDeviceManagerSettings->serialDeviceFilter().isMatching(portInfo)) {
                 continue;
             }
 
@@ -58,22 +62,22 @@ QList<QSerialPortInfo> SerialDeviceManager::openedSerialDevices() const
 
 void SerialDeviceManager::setSerialDeviceAutoconnection(bool state)
 {
-    p_settings->setSerialDeviceAutoconnection(state);
+    serialDeviceManagerSettings->setSerialDeviceAutoconnection(state);
 }
 
 void SerialDeviceManager::setSerialDeviceFilter(const SerialPortFilter& newFilter)
 {
-    p_settings->saveSerialDeviceFilter(newFilter);
+    serialDeviceManagerSettings->saveSerialDeviceFilter(newFilter);
 }
 
 void SerialDeviceManager::appendSerialDeviceFilter(const SerialPortFilter& filter)
 {
-    p_settings->appendSerialDeviceFilter(filter);
+    serialDeviceManagerSettings->appendSerialDeviceFilter(filter);
 }
 
 void SerialDeviceManager::setDefaultPortConfig(const SerialPortConfig& config)
 {
-    p_settings->setDefaultSerialPortCongiguration(config);
+    serialDeviceManagerSettings->setDefaultSerialPortCongiguration(config);
 }
 
 void SerialDeviceManager::serialDeviceOpeningRequested(const QSerialPortInfo& port)
@@ -103,12 +107,12 @@ void SerialDeviceManager::serialDeviceClosureRequested(const QSerialPortInfo& de
 void SerialDeviceManager::_handleAttachedSerialDevice(const QSerialPortInfo& port)
 {
     //This method is invoked when new device is connected to the computer
-    if (!p_settings->serialDeviceAutoconnection()) {  //If autoconnect disabled
+    if (!serialDeviceManagerSettings->serialDeviceAutoconnection()) {  //If autoconnect disabled
         emit serialDeviceWasAttached(port);           //Just inform user about new device
         return;
     }
 
-    if (!p_settings->serialDeviceFilter().isMatching(port)) {     //If autoconnect enabled, but not matching criteria
+    if (!serialDeviceManagerSettings->serialDeviceFilter().isMatching(port)) {     //If autoconnect enabled, but not matching criteria
         emit serialDeviceWasAttached(port);                       //Jsut inform user about new device
         return;
     }
@@ -152,7 +156,7 @@ void SerialDeviceManager::_serialDeviceErrorOccured(QSerialPort::SerialPortError
 bool SerialDeviceManager::_tryOpeningSerialDevice(const QSerialPortInfo& portInfo)
 {
     SerialDevice* device = new SerialDevice(portInfo);
-    device->configureSerialPort(p_settings->defaultSerialPortConfiguration());
+    device->configureSerialPort(serialDeviceManagerSettings->defaultSerialPortConfiguration());
 
     if (!device->open(QIODevice::ReadOnly)) {
         qDebug() << "Port "<<portInfo.portName()<< " opening failed. Reason: "<<device->errorString();

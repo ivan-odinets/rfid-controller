@@ -4,7 +4,7 @@ This application allow executing commands based on readings from devices connect
 
 Icons used: [Rfid icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/rfid)
 
-Version: 0.1.1
+Version: 0.1.2
 
 ## Features
 
@@ -13,6 +13,7 @@ Currently working:
 - Reading from serial devices. Can be used together with Arduino-based DIY RFID and NFC readers;
 - Automatic connection of devices based on their VendorId and ProductId as well as on their names;
 - Saving and restoring files with commands in JSON format;
+- Logging events to file as well as displaying events in widget;
 
 Currently only Linux-based systems are supported. Tested with Qt 6.4.2 and Qt 5.15.8
 In future support for Android and Windows systems will be added.

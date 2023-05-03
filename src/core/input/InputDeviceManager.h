@@ -1,18 +1,22 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -21,10 +25,9 @@
 
 #include <QObject>
 
-#include "./appconfig/InputDeviceManagerSettings.h"
-
 #include "./InputDeviceFilter.h"
 #include "./InputDeviceWatcher.h"
+#include "./appconfig/InputDeviceManagerSettings.h"
 #include "./core/devices/InputDevice.h"
 
 /*!
@@ -47,10 +50,10 @@ public:
     InputDeviceInfoList openedInputDevices() const;
     InputDeviceInfoList availableInputDevices() const           { return m_inputDeviceWatcher.availableDevices(); }
 
-    bool                inputDeviceAutoconnection() const       { return p_settings->inputDeviceAutoconnection(); }
+    bool                inputDeviceAutoconnection() const       { return inputDeviceManagerSettings->inputDeviceAutoconnection(); }
     void                setInputDeviceAutoconnection(bool state);
 
-    InputDeviceFilter   inputDeviceFilter() const               { return p_settings->inputDeviceFilter(); }
+    InputDeviceFilter   inputDeviceFilter() const               { return inputDeviceManagerSettings->inputDeviceFilter(); }
     void                setInputDeviceFilter(const InputDeviceFilter& newFilter);
     void                appendInputDeviceFilter(const InputDeviceFilter& sourceFilter);
 
@@ -82,7 +85,6 @@ private slots:
     void _inputDeviceErrorOccured(InputDevice::InputDeviceError error);
 
 private:
-    InputDeviceManagerSettings*   p_settings;
     InputDeviceWatcher            m_inputDeviceWatcher;
     QList<InputDevice*>           m_openedInputDevices;
     bool _tryOpeningInputDevice(const InputDeviceInfo& portInfo);

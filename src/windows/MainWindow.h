@@ -1,18 +1,22 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -29,13 +33,19 @@ class QActionGroup;
 
 class CommandList;
 class RfidController;
-class MainWindowSettings;
 class MonitorWidget;
 class NotificationMenu;
 
 #ifndef QT_NO_SYSTEMTRAYICON
     #include <QSystemTrayIcon>
 #endif //QT_NO_SYSTEMTRAYICON
+
+#ifdef LOG
+    class QTabWidget;
+
+    class LoggingMenu;
+    class LogWidget;
+#endif // LOG
 
 #ifdef HID
     class InputDeviceInfo;
@@ -100,8 +110,6 @@ private slots:
 
 private:
     void _loadSettings();
-    void _saveSettings();
-    MainWindowSettings*           p_windowSettings;
     RfidController*               p_controller;
 
     void _addRecentFileAction(const QString& fileName);
@@ -113,15 +121,15 @@ private:
     bool _maybeSave();
 
     //UI-Related
-    void _setupUi();
-    void _setupMenus();
-    void _connectController();
+    inline void _setupUi();
+    inline void _setupMenus();
+    inline void _connectController();
 
     QActionGroup*                 w_recentFilesActions;
     QAction*                      w_recentFilesSeparator;
     QMenu*                        w_recentFilesMenu;
 
-    MonitorWidget*                w_centralWidget;
+    MonitorWidget*                w_monitorWidget;
     QAction*                      w_minimizeOnClose;
     QAction*                      w_startHidden;
 
@@ -185,6 +193,18 @@ private:
 private slots:
     void _iconActivated(QSystemTrayIcon::ActivationReason reason);
 #endif //QT_NO_SYSTEMTRAYICON
+
+#ifdef LOG
+//
+// This part is needed only if we have SystemTray support enabled
+//
+
+private:
+    QTabWidget*    w_tabWidget;
+    LoggingMenu*   w_loggingMenu;
+    LogWidget*     w_logWidget;
+
+#endif //LOG
 };
 
 #endif // MAINWINDOW_H

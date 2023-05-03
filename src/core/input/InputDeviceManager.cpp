@@ -1,25 +1,29 @@
 /*
  **********************************************************************************************************************
  *
- * This file is part of RFID Controller.
+ * This file is part of the rfid-controller project.
  *
- * RFID Controller is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * Copyright (c) 2023 Ivan Odinets <i_odinets@protonmail.com>
  *
- * RFID Controller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * rfid-controller is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License along with RFID Controller. If not, see
- * <https://www.gnu.org/licenses/>.
+ * rfid-controller is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with rfid-controller. If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "InputDeviceManager.h"
 
 InputDeviceManager::InputDeviceManager(QObject *parent)
-    : QObject{parent},p_settings(InputDeviceManagerSettings::get())
+    : QObject{parent}
 {
     connect(&m_inputDeviceWatcher,&InputDeviceWatcher::deviceWasAttached,this,&InputDeviceManager::_handleAttachedInputDevice);
     connect(&m_inputDeviceWatcher,&InputDeviceWatcher::deviceWasDetached,this,&InputDeviceManager::_handleDetachedInputDevice);
@@ -28,11 +32,11 @@ InputDeviceManager::InputDeviceManager(QObject *parent)
 void InputDeviceManager::start()
 {
     //Automatically connect all devices, which are matching autoconnect criteria
-    if (p_settings->inputDeviceAutoconnection()) {   //If autoconnect enabled
+    if (inputDeviceManagerSettings->inputDeviceAutoconnection()) {   //If autoconnect enabled
 
         //Go through attached device list and connect enything which is fitting autoconnect rules
         for (const InputDeviceInfo& deviceInfo : m_inputDeviceWatcher.availableDevices()) {
-            if (!p_settings->inputDeviceFilter().isMatching(deviceInfo)) {
+            if (!inputDeviceManagerSettings->inputDeviceFilter().isMatching(deviceInfo)) {
                 continue;
             }
 
@@ -56,17 +60,17 @@ InputDeviceInfoList InputDeviceManager::openedInputDevices() const
 
 void InputDeviceManager::setInputDeviceAutoconnection(bool state)
 {
-    p_settings->setInputDeviceAutoconnection(state);
+    inputDeviceManagerSettings->setInputDeviceAutoconnection(state);
 }
 
 void InputDeviceManager::setInputDeviceFilter(const InputDeviceFilter& filter)
 {
-    p_settings->setInputDeviceFilter(filter);
+    inputDeviceManagerSettings->setInputDeviceFilter(filter);
 }
 
 void InputDeviceManager::appendInputDeviceFilter(const InputDeviceFilter& filter)
 {
-    p_settings->appendInputDeviceFilter(filter);
+    inputDeviceManagerSettings->appendInputDeviceFilter(filter);
 }
 
 void InputDeviceManager::inputDeviceOpeningRequested(const InputDeviceInfo& deviceDetails)
@@ -92,12 +96,12 @@ void InputDeviceManager::inputDeviceClosureRequested(const InputDeviceInfo& devi
 void InputDeviceManager::_handleAttachedInputDevice(const InputDeviceInfo& deviceDetails)
 {
     //This method is invoked when new device is connected to the computer
-    if (!p_settings->inputDeviceAutoconnection()) {   //If autoconnect disabled
+    if (!inputDeviceManagerSettings->inputDeviceAutoconnection()) {   //If autoconnect disabled
         emit inputDeviceWasAttached(deviceDetails);   //Just inform user about new device
         return;
     }
 
-    if (!p_settings->inputDeviceFilter().isMatching(deviceDetails)) {     //If autoconnect enabled, but not matching criteria
+    if (!inputDeviceManagerSettings->inputDeviceFilter().isMatching(deviceDetails)) {     //If autoconnect enabled, but not matching criteria
         emit inputDeviceWasAttached(deviceDetails);                       //Jsut inform user about new device
         return;
     }

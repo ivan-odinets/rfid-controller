@@ -20,25 +20,35 @@
  *
  */
 
-#include "NfcManager.h"
+#ifndef LOGGERWIDGETSETTINGS_H
+#define LOGGERWIDGETSETTINGS_H
 
-NfcManager::NfcManager(QObject *parent)
-    : QObject{parent}
-{}
+#include "SettingsCore.h"
 
-void NfcManager::start()
+class LoggerWidgetSettings : public virtual SettingsCore
 {
-    m_nfcManager.startTargetDetection();
-}
+public:
+    static LoggerWidgetSettings* get() {
+        Q_ASSERT(theOne != nullptr);
+        return theOne;
+    }
 
-void NfcManager::stop()
-{
-    m_nfcManager.stopTargetDetection();
-}
+    bool logToWidget() const { return m_logToWidget; }
+    void setLogToWidget(bool state);
 
-void NfcManager::_nfcTargetDetected(QNearFieldTarget* target)
-{
-    emit keyFound(target->uid());
+protected:
+    LoggerWidgetSettings() {
+        //Save this, so some other code parts can access only this specific part of settings
+        Q_ASSERT(theOne == nullptr);
+        theOne = this;
+    }
+    void _loadValues();
 
-    target->deleteLater();
-}
+private:
+    static LoggerWidgetSettings* theOne;
+
+    bool m_logToWidget;
+};
+#define loggerWidgetSettings LoggerWidgetSettings::get()
+
+#endif // LOGGERWIDGETSETTINGS_H
